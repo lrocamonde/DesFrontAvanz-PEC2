@@ -72,20 +72,22 @@ export class CategoryFormComponent implements OnInit {
     if (this.categoryId) {
       this.isUpdateMode = true;
       try {
-        this.category = await this.categoryService.getCategoryById(
+        this.categoryService.getCategoryById(
           this.categoryId
-        );
+        ).subscribe((category) => {
+          this.category = category
 
-        this.title.setValue(this.category.title);
+          this.title.setValue(this.category.title);
 
-        this.description.setValue(this.category.description);
-
-        this.css_color.setValue(this.category.css_color);
-
-        this.categoryForm = this.formBuilder.group({
-          title: this.title,
-          description: this.description,
-          css_color: this.css_color,
+          this.description.setValue(this.category.description);
+  
+          this.css_color.setValue(this.category.css_color);
+  
+          this.categoryForm = this.formBuilder.group({
+            title: this.title,
+            description: this.description,
+            css_color: this.css_color,
+          });
         });
       } catch (error: any) {
         errorResponse = error.error;
@@ -102,10 +104,10 @@ export class CategoryFormComponent implements OnInit {
       if (userId) {
         this.category.userId = userId;
         try {
-          await this.categoryService.updateCategory(
+          this.categoryService.updateCategory(
             this.categoryId,
             this.category
-          );
+          ).subscribe();
           responseOK = true;
         } catch (error: any) {
           errorResponse = error.error;
@@ -137,7 +139,7 @@ export class CategoryFormComponent implements OnInit {
     if (userId) {
       this.category.userId = userId;
       try {
-        await this.categoryService.createCategory(this.category);
+        this.categoryService.createCategory(this.category).subscribe();
         responseOK = true;
       } catch (error: any) {
         errorResponse = error.error;

@@ -42,7 +42,7 @@ export class HomeComponent {
       this.showButtons = true;
     }
     try {
-      this.posts = await this.postService.getPosts();
+      this.postService.getPosts().subscribe(posts => this.posts = posts);
     } catch (error: any) {
       errorResponse = error.error;
       this.sharedService.errorLog(errorResponse);
@@ -52,7 +52,7 @@ export class HomeComponent {
   async like(postId: string): Promise<void> {
     let errorResponse: any;
     try {
-      await this.postService.likePost(postId);
+      this.postService.likePost(postId).subscribe();
       this.loadPosts();
     } catch (error: any) {
       errorResponse = error.error;
@@ -63,7 +63,7 @@ export class HomeComponent {
   async dislike(postId: string): Promise<void> {
     let errorResponse: any;
     try {
-      await this.postService.dislikePost(postId);
+      this.postService.dislikePost(postId).subscribe();
       this.loadPosts();
     } catch (error: any) {
       errorResponse = error.error;

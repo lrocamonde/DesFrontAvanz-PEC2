@@ -60,14 +60,16 @@ export class LoginComponent implements OnInit {
     this.loginUser.email = this.email.value;
     this.loginUser.password = this.password.value;
     try {
-      const authToken = await this.authService.login(this.loginUser);
-      responseOK = true;
-      this.loginUser.user_id = authToken.user_id;
-      this.loginUser.access_token = authToken.access_token;
-      // save token to localstorage for next requests
-      this.localStorageService.set('user_id', this.loginUser.user_id);
-      this.localStorageService.set('access_token', this.loginUser.access_token);
+      this.authService.login(this.loginUser).subscribe((authToken) => {
+        this.loginUser.user_id = authToken.user_id;
+        this.loginUser.access_token = authToken.access_token;
+        // save token to localstorage for next requests
+        this.localStorageService.set('user_id', this.loginUser.user_id);
+        this.localStorageService.set('access_token', this.loginUser.access_token);
+      });
+      responseOK = true; 
     } catch (error: any) {
+      console.log("Fallo");
       responseOK = false;
       errorResponse = error.error;
       const headerInfo: HeaderMenus = {

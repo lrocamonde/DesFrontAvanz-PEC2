@@ -96,25 +96,25 @@ export class ProfileComponent implements OnInit {
     const userId = this.localStorageService.get('user_id');
     if (userId) {
       try {
-        const userData = await this.userService.getUSerById(userId);
-
-        this.name.setValue(userData.name);
-        this.surname_1.setValue(userData.surname_1);
-        this.surname_2.setValue(userData.surname_2);
-        this.alias.setValue(userData.alias);
-        this.birth_date.setValue(
-          formatDate(userData.birth_date, 'yyyy-MM-dd', 'en')
-        );
-        this.email.setValue(userData.email);
-
-        this.profileForm = this.formBuilder.group({
-          name: this.name,
-          surname_1: this.surname_1,
-          surname_2: this.surname_2,
-          alias: this.alias,
-          birth_date: this.birth_date,
-          email: this.email,
-          password: this.password,
+        this.userService.getUSerById(userId).subscribe( userData => {
+          this.name.setValue(userData.name);
+          this.surname_1.setValue(userData.surname_1);
+          this.surname_2.setValue(userData.surname_2);
+          this.alias.setValue(userData.alias);
+          this.birth_date.setValue(
+            formatDate(userData.birth_date, 'yyyy-MM-dd', 'en')
+          );
+          this.email.setValue(userData.email);
+  
+          this.profileForm = this.formBuilder.group({
+            name: this.name,
+            surname_1: this.surname_1,
+            surname_2: this.surname_2,
+            alias: this.alias,
+            birth_date: this.birth_date,
+            email: this.email,
+            password: this.password,
+          });
         });
       } catch (error: any) {
         errorResponse = error.error;
@@ -139,7 +139,7 @@ export class ProfileComponent implements OnInit {
 
     if (userId) {
       try {
-        await this.userService.updateUser(userId, this.profileUser);
+        this.userService.updateUser(userId, this.profileUser).subscribe();
         responseOK = true;
       } catch (error: any) {
         responseOK = false;

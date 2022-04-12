@@ -27,9 +27,9 @@ export class CategoriesListComponent {
     const userId = this.localStorageService.get('user_id');
     if (userId) {
       try {
-        this.categories = await this.categoryService.getCategoriesByUserId(
+        this.categoryService.getCategoriesByUserId(
           userId
-        );
+        ).subscribe(categories => this.categories = categories);
       } catch (error: any) {
         errorResponse = error.error;
         this.sharedService.errorLog(errorResponse);
@@ -54,12 +54,13 @@ export class CategoriesListComponent {
     );
     if (result) {
       try {
-        const rowsAffected = await this.categoryService.deleteCategory(
+        this.categoryService.deleteCategory(
           categoryId
-        );
-        if (rowsAffected.affected > 0) {
-          this.loadCategories();
-        }
+        ).subscribe((rowsAffected) => {
+          if (rowsAffected.affected > 0) {
+            this.loadCategories();
+          }
+        });
       } catch (error: any) {
         errorResponse = error.error;
         this.sharedService.errorLog(errorResponse);

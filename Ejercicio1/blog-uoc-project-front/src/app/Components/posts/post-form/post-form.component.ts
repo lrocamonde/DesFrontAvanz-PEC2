@@ -85,9 +85,9 @@ export class PostFormComponent implements OnInit {
     const userId = this.localStorageService.get('user_id');
     if (userId) {
       try {
-        this.categoriesList = await this.categoryService.getCategoriesByUserId(
+        this.categoryService.getCategoriesByUserId(
           userId
-        );
+        ).subscribe(categoriesList => this.categoriesList = categoriesList);
       } catch (error: any) {
         errorResponse = error.error;
         this.sharedService.errorLog(errorResponse);
@@ -101,28 +101,30 @@ export class PostFormComponent implements OnInit {
     if (this.postId) {
       this.isUpdateMode = true;
       try {
-        this.post = await this.postService.getPostById(this.postId);
+        this.postService.getPostById(this.postId).subscribe( post => {
+          this.post = post;
+          
+          this.title.setValue(this.post.title);
 
-        this.title.setValue(this.post.title);
-
-        this.description.setValue(this.post.description);
-
-        this.publication_date.setValue(
-          formatDate(this.post.publication_date, 'yyyy-MM-dd', 'en')
-        );
-
-        let categoriesIds: string[] = [];
-        this.post.categories.forEach((cat: CategoryDTO) => {
-          categoriesIds.push(cat.categoryId);
-        });
-
-        this.categories.setValue(categoriesIds);
-
-        this.postForm = this.formBuilder.group({
-          title: this.title,
-          description: this.description,
-          publication_date: this.publication_date,
-          categories: this.categories,
+          this.description.setValue(this.post.description);
+  
+          this.publication_date.setValue(
+            formatDate(this.post.publication_date, 'yyyy-MM-dd', 'en')
+          );
+  
+          let categoriesIds: string[] = [];
+          this.post.categories.forEach((cat: CategoryDTO) => {
+            categoriesIds.push(cat.categoryId);
+          });
+  
+          this.categories.setValue(categoriesIds);
+  
+          this.postForm = this.formBuilder.group({
+            title: this.title,
+            description: this.description,
+            publication_date: this.publication_date,
+            categories: this.categories,
+          });
         });
       } catch (error: any) {
         errorResponse = error.error;
@@ -139,7 +141,7 @@ export class PostFormComponent implements OnInit {
       if (userId) {
         this.post.userId = userId;
         try {
-          await this.postService.updatePost(this.postId, this.post);
+          this.postService.updatePost(this.postId, this.post).subscribe();
           responseOK = true;
         } catch (error: any) {
           errorResponse = error.error;
@@ -171,7 +173,7 @@ export class PostFormComponent implements OnInit {
     if (userId) {
       this.post.userId = userId;
       try {
-        await this.postService.createPost(this.post);
+        this.postService.createPost(this.post).subscribe();
         responseOK = true;
       } catch (error: any) {
         errorResponse = error.error;

@@ -107,7 +107,7 @@ export class RegisterComponent implements OnInit {
     this.registerUser = this.registerForm.value;
 
     try {
-      await this.userService.register(this.registerUser);
+      this.userService.register(this.registerUser).subscribe();
       responseOK = true;
     } catch (error: any) {
       responseOK = false;
