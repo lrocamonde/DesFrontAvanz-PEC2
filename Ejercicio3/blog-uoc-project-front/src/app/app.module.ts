@@ -11,7 +11,12 @@ import { PostModule } from './post/post.module';
 import { SharedModule } from './shared/shared.module';
 import { UserModule } from './user/user.module';
 import { StoreModule } from '@ngrx/store';
-import { authReducer } from './auth/reducers';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { environment } from 'src/environments/environment';
+import { appReducers } from './app.reducer';
+import { EffectsModule } from '@ngrx/effects';
+import { EffectsArray } from './effects';
+
 
 @NgModule({
   declarations: [
@@ -27,7 +32,12 @@ import { authReducer } from './auth/reducers';
     PostModule,
     SharedModule,
     UserModule,
-    StoreModule.forRoot({auth: authReducer})
+    StoreModule.forRoot( appReducers ),
+    EffectsModule.forRoot(EffectsArray),
+    StoreDevtoolsModule.instrument({
+      maxAge: 25,
+      logOnly: environment.production
+    })
   ],
   providers: [
     {

@@ -8,10 +8,12 @@ import {
 import { Router } from '@angular/router';
 import { AuthDTO } from 'src/app/auth/models/auth.dto';
 import { HeaderMenus } from 'src/app/shared/models/header-menus.dto';
-import { AuthService } from 'src/app/auth/services/auth.service';
 import { HeaderMenusService } from 'src/app/shared/services/header-menus.service';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
+import { login } from '../actions';
 
 @Component({
   selector: 'app-login',
@@ -26,11 +28,11 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private authService: AuthService,
     private sharedService: SharedService,
     private headerMenusService: HeaderMenusService,
     private localStorageService: LocalStorageService,
-    private router: Router
+    private router: Router,
+    private store: Store<AppState>
   ) {
     this.loginUser = new AuthDTO('', '', '', '');
 
@@ -53,48 +55,57 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  async login(): Promise<void> {
+  login(): void {
     let responseOK: boolean = false;
     let errorResponse: any;
 
     this.loginUser.email = this.email.value;
     this.loginUser.password = this.password.value;
-    try {
-      this.authService.login(this.loginUser).subscribe((authToken) => {
-        this.loginUser.user_id = authToken.user_id;
-        this.loginUser.access_token = authToken.access_token;
-        // save token to localstorage for next requests
-        this.localStorageService.set('user_id', this.loginUser.user_id);
-        this.localStorageService.set('access_token', this.loginUser.access_token);
-      });
-      responseOK = true; 
-    } catch (error: any) {
-      console.log("Fallo");
-      responseOK = false;
-      errorResponse = error.error;
-      const headerInfo: HeaderMenus = {
-        showAuthSection: false,
-        showNoAuthSection: true,
-      };
-      this.headerMenusService.headerManagement.next(headerInfo);
 
-      this.sharedService.errorLog(error.error);
-    }
 
-    await this.sharedService.managementToast(
-      'loginFeedback',
-      responseOK,
-      errorResponse
-    );
+    this.store.select('authApp').subscribe(async (callback) =>{
 
-    if (responseOK) {
-      const headerInfo: HeaderMenus = {
-        showAuthSection: true,
-        showNoAuthSection: false,
-      };
-      // update options menu
-      this.headerMenusService.headerManagement.next(headerInfo);
-      this.router.navigateByUrl('home');
-    }
+      if(callback.error){
+
+        console.log("Fallo");
+        responseOK = false;
+        errorResponse = callback.error.error;
+        const headerInfo: HeaderMenus = {
+          showAuthSection: false,
+          showNoAuthSection: true,
+        };
+        this.headerMenusService.headerManagement.next(headerInfo);
+  
+        this.sharedService.errorLog(callback.error.error);
+
+      } else{
+        
+        console.log("Correcto");
+        responseOK = true; 
+        this.localStorageService.set('user_id', callback.auth.user_id);
+        this.localStorageService.set('access_token', callback.auth.access_token);
+
+      }
+      
+      await this.sharedService.managementToast(
+        'loginFeedback',
+        responseOK,
+        errorResponse
+      );
+  
+      if (responseOK) {
+        const headerInfo: HeaderMenus = {
+          showAuthSection: true,
+          showNoAuthSection: false,
+        };
+        // update options menu
+        this.headerMenusService.headerManagement.next(headerInfo);
+        this.router.navigateByUrl('home');
+      }
+
+    })
+
+    this.store.dispatch(login({ auth: new AuthDTO('', '',this.loginUser.email, this.loginUser.password)}));
+
   }
 }

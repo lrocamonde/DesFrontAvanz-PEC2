@@ -12,6 +12,9 @@ import { UserDTO } from 'src/app/user/models/user.dto';
 import { HeaderMenusService } from 'src/app/shared/services/header-menus.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
 import { UserService } from 'src/app/user/services/user.service';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
+import { register } from '../actions';
 
 @Component({
   selector: 'app-register',
@@ -37,7 +40,8 @@ export class RegisterComponent implements OnInit {
     private userService: UserService,
     private sharedService: SharedService,
     private headerMenusService: HeaderMenusService,
-    private router: Router
+    private router: Router,
+    private store: Store<AppState>
   ) {
     this.registerUser = new UserDTO('', '', '', '', new Date(), '', '');
 
@@ -94,7 +98,7 @@ export class RegisterComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  async register(): Promise<void> {
+  register(): void {
     let responseOK: boolean = false;
     this.isValidForm = false;
     let errorResponse: any;
@@ -106,34 +110,37 @@ export class RegisterComponent implements OnInit {
     this.isValidForm = true;
     this.registerUser = this.registerForm.value;
 
-    try {
-      this.userService.register(this.registerUser).subscribe();
-      responseOK = true;
-    } catch (error: any) {
-      responseOK = false;
-      errorResponse = error.error;
+    this.store.select('userApp').subscribe(async callback => {
+      if (callback.error){
+        responseOK = false;
+        errorResponse = callback.error.error;
+  
+        const headerInfo: HeaderMenus = {
+          showAuthSection: false,
+          showNoAuthSection: true,
+        };
+        this.headerMenusService.headerManagement.next(headerInfo);
+  
+        this.sharedService.errorLog(errorResponse);
+      } else {
+        responseOK = true;
+      }
 
-      const headerInfo: HeaderMenus = {
-        showAuthSection: false,
-        showNoAuthSection: true,
-      };
-      this.headerMenusService.headerManagement.next(headerInfo);
+      await this.sharedService.managementToast(
+        'registerFeedback',
+        responseOK,
+        errorResponse
+      );
+  
+      if (responseOK) {
+        // Reset the form
+        this.registerForm.reset();
+        // After reset form we set birthDate to today again (is an example)
+        this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+        this.router.navigateByUrl('home');
+      }
+    });
 
-      this.sharedService.errorLog(errorResponse);
-    }
-
-    await this.sharedService.managementToast(
-      'registerFeedback',
-      responseOK,
-      errorResponse
-    );
-
-    if (responseOK) {
-      // Reset the form
-      this.registerForm.reset();
-      // After reset form we set birthDate to today again (is an example)
-      this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-      this.router.navigateByUrl('home');
-    }
+    this.store.dispatch(register({ user: this.registerUser }))
   }
 }

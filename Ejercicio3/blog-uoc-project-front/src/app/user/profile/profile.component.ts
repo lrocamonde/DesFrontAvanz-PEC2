@@ -10,6 +10,9 @@ import { UserDTO } from 'src/app/user/models/user.dto';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
 import { UserService } from 'src/app/user/services/user.service';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
+import { getUserById, updateUser } from '../actions';
 
 @Component({
   selector: 'app-profile',
@@ -34,7 +37,8 @@ export class ProfileComponent implements OnInit {
     private formBuilder: FormBuilder,
     private userService: UserService,
     private sharedService: SharedService,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private store: Store<AppState>
   ) {
     this.profileUser = new UserDTO('', '', '', '', new Date(), '', '');
 
@@ -95,8 +99,13 @@ export class ProfileComponent implements OnInit {
     // load user data
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      try {
-        this.userService.getUSerById(userId).subscribe( userData => {
+      this.store.select('userApp').subscribe( callback => {
+        if(callback.error){
+          errorResponse = callback.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          const userData = callback.user;
+
           this.name.setValue(userData.name);
           this.surname_1.setValue(userData.surname_1);
           this.surname_2.setValue(userData.surname_2);
@@ -115,15 +124,14 @@ export class ProfileComponent implements OnInit {
             email: this.email,
             password: this.password,
           });
-        });
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+        }
+      });
+
+      this.store.dispatch(getUserById({userId}));
     }
   }
 
-  async updateUser(): Promise<void> {
+  updateUser(): void {
     let responseOK: boolean = false;
     this.isValidForm = false;
     let errorResponse: any;
@@ -138,21 +146,24 @@ export class ProfileComponent implements OnInit {
     const userId = this.localStorageService.get('user_id');
 
     if (userId) {
-      try {
-        this.userService.updateUser(userId, this.profileUser).subscribe();
-        responseOK = true;
-      } catch (error: any) {
-        responseOK = false;
-        errorResponse = error.error;
+      this.store.select('userApp').subscribe(async callback => {
+        if(callback.error){
+          responseOK = false;
+          errorResponse = callback.error.error;
 
-        this.sharedService.errorLog(errorResponse);
-      }
+          this.sharedService.errorLog(errorResponse);
+        } else{
+          responseOK = true;
+        }
+
+        await this.sharedService.managementToast(
+          'profileFeedback',
+          responseOK,
+          errorResponse
+        );
+      });
+
+      this.store.dispatch(updateUser({userId: userId, user: this.profileUser}));
     }
-
-    await this.sharedService.managementToast(
-      'profileFeedback',
-      responseOK,
-      errorResponse
-    );
   }
 }
