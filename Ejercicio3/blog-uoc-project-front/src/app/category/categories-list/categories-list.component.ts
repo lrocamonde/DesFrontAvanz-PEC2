@@ -1,9 +1,12 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
 import { CategoryDTO } from 'src/app/category/models/category.dto';
 import { CategoryService } from 'src/app/category/services/category.service';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
+import { deleteCategory, getCategoriesByUserId } from '../actions';
 
 @Component({
   selector: 'app-categories-list',
@@ -17,23 +20,25 @@ export class CategoriesListComponent {
     private categoryService: CategoryService,
     private router: Router,
     private localStorageService: LocalStorageService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private store: Store<AppState>
   ) {
     this.loadCategories();
   }
 
-  private async loadCategories(): Promise<void> {
+  private loadCategories(): void {
     let errorResponse: any;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      try {
-        this.categoryService.getCategoriesByUserId(
-          userId
-        ).subscribe(categories => this.categories = categories);
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+      this.store.select('categoryApp').subscribe( callback => {
+        if(callback.error){
+          errorResponse = callback.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          this.categories = callback.categories;
+        }
+      });
+      this.store.dispatch(getCategoriesByUserId({ userId: userId}));
     }
   }
 
@@ -53,18 +58,20 @@ export class CategoriesListComponent {
       'Confirm delete category with id: ' + categoryId + ' .'
     );
     if (result) {
-      try {
-        this.categoryService.deleteCategory(
-          categoryId
-        ).subscribe((rowsAffected) => {
-          if (rowsAffected.affected > 0) {
+      this.store.select('categoryApp').subscribe( state => {
+        if(state.error){
+          errorResponse = state.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          if(state.rowsAffected > 0){
+            //Bucle infinito aqui??
             this.loadCategories();
+            console.log('ROWS AFFECTED');
+            console.log(state.rowsAffected);
           }
-        });
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+        }
+      });
+      this.store.dispatch(deleteCategory({categoryId: categoryId}));
     }
   }
 }

@@ -14,8 +14,8 @@ export class UserEffects {
     registerUser$ = createEffect(() => 
         this.action$.pipe(
             ofType(register),
-            mergeMap((user) => 
-                this.userService.register(user.user).pipe(
+            mergeMap((params) => 
+                this.userService.register(params.user).pipe(
                     map((user) => registerSuccess({user: user})),
                     catchError((err) => of(registerError({payload: err})))
                 )
@@ -26,8 +26,8 @@ export class UserEffects {
     updateUser$ = createEffect(() => 
         this.action$.pipe(
             ofType(updateUser),
-            mergeMap((user) => 
-                this.userService.updateUser(user.userId, user.user).pipe(
+            mergeMap((params) => 
+                this.userService.updateUser(params.userId, params.user).pipe(
                     map((user) => updateUserSuccess({user: user})),
                     catchError((err) => of(updateUserError({payload: err})))
                 )
@@ -38,8 +38,8 @@ export class UserEffects {
     getUserById$ = createEffect(() =>
         this.action$.pipe(
             ofType(getUserById),
-            mergeMap((userId) =>
-                this.userService.getUSerById(userId.userId).pipe(
+            mergeMap((params) =>
+                this.userService.getUSerById(params.userId).pipe(
                     map((user) => getUserByIdSuccess({user: user}))
                 )
             )

@@ -6,10 +6,13 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { State, Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
 import { CategoryDTO } from 'src/app/category/models/category.dto';
 import { CategoryService } from 'src/app/category/services/category.service';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
+import { createCategory, updateCategory } from '../actions';
 
 @Component({
   selector: 'app-category-form',
@@ -35,7 +38,8 @@ export class CategoryFormComponent implements OnInit {
     private formBuilder: FormBuilder,
     private router: Router,
     private sharedService: SharedService,
-    private localStorageService: LocalStorageService
+    private localStorageService: LocalStorageService,
+    private store: Store<AppState>
   ) {
     this.isValidForm = null;
     this.categoryId = this.activatedRoute.snapshot.paramMap.get('id');
@@ -96,71 +100,75 @@ export class CategoryFormComponent implements OnInit {
     }
   }
 
-  private async editCategory(): Promise<boolean> {
+  private editCategory(): boolean {
     let errorResponse: any;
     let responseOK: boolean = false;
     if (this.categoryId) {
       const userId = this.localStorageService.get('user_id');
       if (userId) {
         this.category.userId = userId;
-        try {
-          this.categoryService.updateCategory(
-            this.categoryId,
-            this.category
-          ).subscribe();
-          responseOK = true;
-        } catch (error: any) {
-          errorResponse = error.error;
-          this.sharedService.errorLog(errorResponse);
-        }
 
-        await this.sharedService.managementToast(
-          'categoryFeedback',
-          responseOK,
-          errorResponse
-        );
+        this.store.select('categoryApp').subscribe(async callback => {
+          if(callback.error){
+            errorResponse = callback.error.error;
+            this.sharedService.errorLog(errorResponse);
+          } else {
+            responseOK = true;
+          }
 
-        if (responseOK) {
-          // Reset the form
-          //this.registerForm.reset();
-          // After reset form we set birthDate to today again (is an example)
-          //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-          this.router.navigateByUrl('categories');
-        }
+          await this.sharedService.managementToast(
+            'categoryFeedback',
+            responseOK,
+            errorResponse
+          );
+
+          if (responseOK) {
+            // Reset the form
+            //this.registerForm.reset();
+            // After reset form we set birthDate to today again (is an example)
+            //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+            this.router.navigateByUrl('categories');
+          }
+        });
+
+        this.store.dispatch(updateCategory({ categoryId: this.categoryId, categoryUpd: this.category}));
       }
     }
     return responseOK;
   }
 
-  private async createCategory(): Promise<boolean> {
+  private createCategory(): boolean {
     let errorResponse: any;
     let responseOK: boolean = false;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
       this.category.userId = userId;
-      try {
-        this.categoryService.createCategory(this.category).subscribe();
-        responseOK = true;
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
 
-      await this.sharedService.managementToast(
-        'categoryFeedback',
-        responseOK,
-        errorResponse
-      );
+      this.store.select('categoryApp').subscribe( async callback => {
+          if(callback.error){
+            errorResponse = callback.error.error;
+            this.sharedService.errorLog(errorResponse);
+          } else{
+            responseOK = true;
+          }
 
-      if (responseOK) {
-        // Reset the form
-        //this.registerForm.reset();
-        // After reset form we set birthDate to today again (is an example)
-        //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-        this.router.navigateByUrl('categories');
-      }
-    }
+          await this.sharedService.managementToast(
+            'categoryFeedback',
+            responseOK,
+            errorResponse
+          );
+    
+          if (responseOK) {
+            // Reset the form
+            //this.registerForm.reset();
+            // After reset form we set birthDate to today again (is an example)
+            //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+            this.router.navigateByUrl('categories');
+          }
+      })
 
+      this.store.dispatch(createCategory( { category: this.category }));
+    } 
     return responseOK;
   }
 
