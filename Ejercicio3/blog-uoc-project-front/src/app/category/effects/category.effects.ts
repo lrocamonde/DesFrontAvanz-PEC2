@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { catchError, map, mergeMap, of } from "rxjs";
-import { createCategory, createCategoryError, createCategorySuccess, deleteCategory, deleteCategoryError, deleteCategorySuccess, getCategoriesByUserId, getCategoriesByUserIdError, getCategoriesByUserIdSuccess, updateCategory, updateCategoryError, updateCategorySuccess } from "../actions";
+import { createCategory, createCategoryError, createCategorySuccess, deleteCategory, deleteCategoryError, deleteCategorySuccess, getCategoriesByUserId, getCategoriesByUserIdError, getCategoriesByUserIdSuccess, getCategoryById, getCategoryByIdError, getCategoryByIdSuccess, updateCategory, updateCategoryError, updateCategorySuccess } from "../actions";
 import { CategoryService } from "../services/category.service";
 
 @Injectable()
@@ -29,7 +29,7 @@ export class CategoryEffects {
             ofType(updateCategory),
             mergeMap((params) =>
                 this.categoryService.updateCategory(params.categoryId, params.categoryUpd).pipe(
-                    map((category) => updateCategorySuccess({categoryId: category.categoryId, categoryUpd: category})),
+                    map((category) => updateCategorySuccess({categoryUpd: category})),
                     catchError((err) => of(updateCategoryError({payload: err})))
                 )
             )
@@ -49,12 +49,24 @@ export class CategoryEffects {
     )
 
     deleteCategory$ = createEffect(() =>
+        this.action$.pipe(
+            ofType(deleteCategory),
+            mergeMap((params) =>
+                this.categoryService.deleteCategory(params.categoryId).pipe(
+                    map((deleteResponse) => deleteCategorySuccess({deleteResponse: deleteResponse.affected})),
+                    catchError((err) => of(deleteCategoryError({payload: err})))
+                )
+            )
+        )
+    )
+
+    getCategoryById$ = createEffect(() =>
     this.action$.pipe(
-        ofType(deleteCategory),
+        ofType(getCategoryById),
         mergeMap((params) =>
-            this.categoryService.deleteCategory(params.categoryId).pipe(
-                map((deleteResponse) => deleteCategorySuccess({deleteResponse: deleteResponse.affected})),
-                catchError((err) => of(deleteCategoryError({payload: err})))
+            this.categoryService.getCategoryById(params.categoryId).pipe(
+                map((category) => getCategoryByIdSuccess({category: category})),
+                catchError((err) => of(getCategoryByIdError({payload: err})))
             )
         )
     )

@@ -4,6 +4,9 @@ import { PostDTO } from 'src/app/post/models/post.dto';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { PostService } from 'src/app/post/services/post.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
+import { deletePost, getPostsByUserId } from '../actions';
 
 @Component({
   selector: 'app-posts-list',
@@ -16,7 +19,8 @@ export class PostsListComponent {
     private postService: PostService,
     private router: Router,
     private localStorageService: LocalStorageService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private store: Store<AppState>
   ) {
     this.loadPosts();
   }
@@ -25,12 +29,15 @@ export class PostsListComponent {
     let errorResponse: any;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      try {
-        this.postService.getPostsByUserId(userId).subscribe(posts => this.posts = posts);
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+      this.store.select('postApp').subscribe( state => {
+        if (state.error) {
+          errorResponse = state.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          this.posts = state.userPosts;
+        }
+      });
+      this.store.dispatch(getPostsByUserId({userId: userId}));
     }
   }
 
@@ -48,16 +55,17 @@ export class PostsListComponent {
     // show confirmation popup
     let result = confirm('Confirm delete post with id: ' + postId + ' .');
     if (result) {
-      try {
-        this.postService.deletePost(postId).subscribe( rowsAffected => {
-          if (rowsAffected.affected > 0) {
+      this.store.select('postApp').subscribe( state => {
+        if (state.error) {
+          errorResponse = state.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          if (state.rowsAffected > 0) {
             this.loadPosts();
           }
-        });   
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+        }
+      });
+      this.store.dispatch(deletePost({postId: postId}));
     }
   }
 }

@@ -13,6 +13,10 @@ import { CategoryService } from 'src/app/category/services/category.service';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { PostService } from 'src/app/post/services/post.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
+import { Store } from '@ngrx/store';
+import { AppState } from 'src/app/app.reducer';
+import { getCategoriesByUserId } from 'src/app/category/actions';
+import { createPost, getPostsById, updatePost } from '../actions';
 
 @Component({
   selector: 'app-post-form',
@@ -39,12 +43,11 @@ export class PostFormComponent implements OnInit {
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private postService: PostService,
     private formBuilder: FormBuilder,
     private router: Router,
     private sharedService: SharedService,
     private localStorageService: LocalStorageService,
-    private categoryService: CategoryService
+    private store: Store<AppState>
   ) {
     this.isValidForm = null;
     this.postId = this.activatedRoute.snapshot.paramMap.get('id');
@@ -84,14 +87,15 @@ export class PostFormComponent implements OnInit {
     let errorResponse: any;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      try {
-        this.categoryService.getCategoriesByUserId(
-          userId
-        ).subscribe(categoriesList => this.categoriesList = categoriesList);
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+      this.store.select('categoryApp').subscribe( state => {
+        if(state.error){
+          errorResponse = state.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          this.categoriesList = state.categories;
+        }
+      });
+      this.store.dispatch(getCategoriesByUserId({ userId: userId}));
     }
   }
 
@@ -100,9 +104,12 @@ export class PostFormComponent implements OnInit {
     // update
     if (this.postId) {
       this.isUpdateMode = true;
-      try {
-        this.postService.getPostById(this.postId).subscribe( post => {
-          this.post = post;
+      this.store.select('postApp').subscribe( state => {
+        if (state.error) {
+          errorResponse = state.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else{
+          this.post = state.post;
           
           this.title.setValue(this.post.title);
 
@@ -125,27 +132,59 @@ export class PostFormComponent implements OnInit {
             publication_date: this.publication_date,
             categories: this.categories,
           });
-        });
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+        }
+      });
+      this.store.dispatch(getPostsById({postId: this.postId}));
     }
   }
 
-  private async editPost(): Promise<boolean> {
+  private editPost(): boolean {
     let errorResponse: any;
     let responseOK: boolean = false;
     if (this.postId) {
       const userId = this.localStorageService.get('user_id');
       if (userId) {
         this.post.userId = userId;
-        try {
-          this.postService.updatePost(this.postId, this.post).subscribe();
-          responseOK = true;
-        } catch (error: any) {
-          errorResponse = error.error;
+        this.store.select('postApp').subscribe(async state => {
+          if (state.error) {
+            errorResponse = state.error.error;
+            this.sharedService.errorLog(errorResponse);
+          } else {
+            responseOK = true;
+          }
+
+          await this.sharedService.managementToast(
+            'postFeedback',
+            responseOK,
+            errorResponse
+          );
+  
+          if (responseOK) {
+            // Reset the form
+            //this.registerForm.reset();
+            // After reset form we set birthDate to today again (is an example)
+            //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+            this.router.navigateByUrl('posts');
+          }
+        });
+        this.store.dispatch(updatePost({postId: this.postId, post: this.post}));
+      }
+    }
+    return responseOK;
+  }
+
+  private createPost(): boolean {
+    let errorResponse: any;
+    let responseOK: boolean = false;
+    const userId = this.localStorageService.get('user_id');
+    if (userId) {
+      this.post.userId = userId;
+      this.store.select('postApp').subscribe(async state => {
+        if (state.error) {
+          errorResponse = state.error.error;
           this.sharedService.errorLog(errorResponse);
+        } else {
+          responseOK = true;
         }
 
         await this.sharedService.managementToast(
@@ -161,40 +200,9 @@ export class PostFormComponent implements OnInit {
           //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
           this.router.navigateByUrl('posts');
         }
-      }
+      });
+      this.store.dispatch(createPost({ post: this.post }))
     }
-    return responseOK;
-  }
-
-  private async createPost(): Promise<boolean> {
-    let errorResponse: any;
-    let responseOK: boolean = false;
-    const userId = this.localStorageService.get('user_id');
-    if (userId) {
-      this.post.userId = userId;
-      try {
-        this.postService.createPost(this.post).subscribe();
-        responseOK = true;
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
-
-      await this.sharedService.managementToast(
-        'postFeedback',
-        responseOK,
-        errorResponse
-      );
-
-      if (responseOK) {
-        // Reset the form
-        //this.registerForm.reset();
-        // After reset form we set birthDate to today again (is an example)
-        //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-        this.router.navigateByUrl('posts');
-      }
-    }
-
     return responseOK;
   }
 

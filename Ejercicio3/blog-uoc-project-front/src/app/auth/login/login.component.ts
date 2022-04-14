@@ -63,27 +63,27 @@ export class LoginComponent implements OnInit {
     this.loginUser.password = this.password.value;
 
 
-    this.store.select('authApp').subscribe(async (callback) =>{
+    this.store.select('authApp').subscribe(async (state) =>{
 
-      if(callback.error){
+      if(state.error){
 
         console.log("Fallo");
         responseOK = false;
-        errorResponse = callback.error.error;
+        errorResponse = state.error.error;
         const headerInfo: HeaderMenus = {
           showAuthSection: false,
           showNoAuthSection: true,
         };
         this.headerMenusService.headerManagement.next(headerInfo);
   
-        this.sharedService.errorLog(callback.error.error);
+        this.sharedService.errorLog(state.error.error);
 
       } else{
         
         console.log("Correcto");
         responseOK = true; 
-        this.localStorageService.set('user_id', callback.auth.user_id);
-        this.localStorageService.set('access_token', callback.auth.access_token);
+        this.localStorageService.set('user_id', state.auth.user_id);
+        this.localStorageService.set('access_token', state.auth.access_token);
 
       }
       

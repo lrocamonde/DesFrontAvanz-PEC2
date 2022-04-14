@@ -30,12 +30,12 @@ export class CategoriesListComponent {
     let errorResponse: any;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      this.store.select('categoryApp').subscribe( callback => {
-        if(callback.error){
-          errorResponse = callback.error.error;
+      this.store.select('categoryApp').subscribe( state => {
+        if(state.error){
+          errorResponse = state.error.error;
           this.sharedService.errorLog(errorResponse);
         } else {
-          this.categories = callback.categories;
+          this.categories = state.categories;
         }
       });
       this.store.dispatch(getCategoriesByUserId({ userId: userId}));
@@ -64,10 +64,7 @@ export class CategoriesListComponent {
           this.sharedService.errorLog(errorResponse);
         } else {
           if(state.rowsAffected > 0){
-            //Bucle infinito aqui??
             this.loadCategories();
-            console.log('ROWS AFFECTED');
-            console.log(state.rowsAffected);
           }
         }
       });

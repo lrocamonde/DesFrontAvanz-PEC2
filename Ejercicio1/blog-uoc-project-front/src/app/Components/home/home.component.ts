@@ -52,8 +52,9 @@ export class HomeComponent {
   async like(postId: string): Promise<void> {
     let errorResponse: any;
     try {
-      this.postService.likePost(postId).subscribe();
-      this.loadPosts();
+      this.postService.likePost(postId).subscribe(() => {
+        this.loadPosts();
+      });
     } catch (error: any) {
       errorResponse = error.error;
       this.sharedService.errorLog(errorResponse);
@@ -63,8 +64,9 @@ export class HomeComponent {
   async dislike(postId: string): Promise<void> {
     let errorResponse: any;
     try {
-      this.postService.dislikePost(postId).subscribe();
-      this.loadPosts();
+      this.postService.dislikePost(postId).subscribe(() => {
+        this.loadPosts();
+      });
     } catch (error: any) {
       errorResponse = error.error;
       this.sharedService.errorLog(errorResponse);

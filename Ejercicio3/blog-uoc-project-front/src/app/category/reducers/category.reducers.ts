@@ -1,10 +1,11 @@
 import { state } from "@angular/animations";
 import { Action, createReducer, on } from "@ngrx/store";
-import { createCategory, createCategoryError, createCategorySuccess, deleteCategory, deleteCategoryError, deleteCategorySuccess, getCategoriesByUserId, getCategoriesByUserIdError, getCategoriesByUserIdSuccess, updateCategory, updateCategoryError, updateCategorySuccess } from "../actions";
+import { createCategory, createCategoryError, createCategorySuccess, deleteCategory, deleteCategoryError, deleteCategorySuccess, getCategoriesByUserId, getCategoriesByUserIdError, getCategoriesByUserIdSuccess, getCategoryById, getCategoryByIdError, getCategoryByIdSuccess, updateCategory, updateCategoryError, updateCategorySuccess } from "../actions";
 import { CategoryDTO } from "../models/category.dto";
 
 export interface CategoryState {
     categories: CategoryDTO[];
+    specificCategory: CategoryDTO;
     loading: boolean;
     loaded: boolean;
     error: any;
@@ -13,6 +14,7 @@ export interface CategoryState {
 
 export const initialState: CategoryState = {
     categories: [],
+    specificCategory: new CategoryDTO('', '', ''),
     loading: false,
     loaded: false,
     error: null,
@@ -32,11 +34,11 @@ const _categoryReducer = createReducer (
         error: payload
     })),
     on(updateCategory, (state) => ({...state})),
-    on(updateCategorySuccess, (state, {categoryId, categoryUpd}) => ({
+    on(updateCategorySuccess, (state, {categoryUpd}) => ({
         ...state,
         error: null,
         categories: [...state.categories.map((category) => {
-            if(category.categoryId === categoryId){
+            if(category.categoryId === categoryUpd.categoryId){
                 return categoryUpd;
             } else{
                 return category;
@@ -47,13 +49,14 @@ const _categoryReducer = createReducer (
         ...state,
         error: payload
     })),
-    on(getCategoriesByUserId, (state) => ({...state, loading: true})),
+    on(getCategoriesByUserId, (state) => ({...state, loading: true, rowsAffected:0})),
     on(getCategoriesByUserIdSuccess, (state, {categories}) => ({
         ...state,
         error: null,
         categories: [...categories],
         loading: false,
-        loaded: true
+        loaded: true,
+        rowsAffected:0
     })),
     on(getCategoriesByUserIdError, (state, {payload}) => ({
         ...state,
@@ -73,7 +76,18 @@ const _categoryReducer = createReducer (
     on(deleteCategoryError, (state, {payload})=> ({
         ...state,
         error: payload,
+    })),
+    on(getCategoryById, (state) => ({...state})),
+    on(getCategoryByIdSuccess, (state, {category}) => ({
+        ...state,
+        error: null,
+        specificCategory: category
+    })),
+    on(getCategoryByIdError, (state, {payload})=> ({
+        ...state,
+        error: payload,
     }))
+
 );
 
 export function categoryReducer(state: CategoryState | undefined, action: Action) {

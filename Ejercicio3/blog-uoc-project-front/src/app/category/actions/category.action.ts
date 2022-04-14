@@ -23,7 +23,7 @@ export const updateCategory = createAction(
 
 export const updateCategorySuccess = createAction(
     '[CATEGORY] Update category succeeded',
-    props<{ categoryId: string, categoryUpd: CategoryDTO }>()
+    props<{ categoryUpd: CategoryDTO }>()
 );
 
 export const updateCategoryError = createAction(
@@ -58,5 +58,20 @@ export const deleteCategorySuccess = createAction(
 
 export const deleteCategoryError = createAction(
     '[CATEGORY] Delete category failed',
+    props<{ payload: any }>()
+);
+
+export const getCategoryById = createAction(
+    '[CATEGORY] Get category by Id',
+    props<{ categoryId: string }>()
+);
+
+export const getCategoryByIdSuccess = createAction(
+    '[CATEGORY] Get category by Id succeeded',
+    props<{ category: CategoryDTO }>()
+);
+
+export const getCategoryByIdError = createAction(
+    '[CATEGORY] Get category by Id failed',
     props<{ payload: any }>()
 );

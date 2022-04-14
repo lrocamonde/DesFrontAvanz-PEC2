@@ -110,10 +110,10 @@ export class RegisterComponent implements OnInit {
     this.isValidForm = true;
     this.registerUser = this.registerForm.value;
 
-    this.store.select('userApp').subscribe(async callback => {
-      if (callback.error){
+    this.store.select('userApp').subscribe(async state => {
+      if (state.error){
         responseOK = false;
-        errorResponse = callback.error.error;
+        errorResponse = state.error.error;
   
         const headerInfo: HeaderMenus = {
           showAuthSection: false,

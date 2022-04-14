@@ -12,7 +12,7 @@ import { CategoryDTO } from 'src/app/category/models/category.dto';
 import { CategoryService } from 'src/app/category/services/category.service';
 import { LocalStorageService } from 'src/app/shared/services/local-storage.service';
 import { SharedService } from 'src/app/shared/services/shared.service';
-import { createCategory, updateCategory } from '../actions';
+import { createCategory, getCategoryById, updateCategory } from '../actions';
 
 @Component({
   selector: 'app-category-form',
@@ -29,12 +29,11 @@ export class CategoryFormComponent implements OnInit {
   isValidForm: boolean | null;
 
   private isUpdateMode: boolean;
-  private validRequest: boolean;
   private categoryId: string | null;
+  private validRequest: boolean
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private categoryService: CategoryService,
     private formBuilder: FormBuilder,
     private router: Router,
     private sharedService: SharedService,
@@ -75,11 +74,13 @@ export class CategoryFormComponent implements OnInit {
     // update
     if (this.categoryId) {
       this.isUpdateMode = true;
-      try {
-        this.categoryService.getCategoryById(
-          this.categoryId
-        ).subscribe((category) => {
-          this.category = category
+
+      this.store.select('categoryApp').subscribe( state => {
+        if(state.error){
+          errorResponse = state.error.error;
+          this.sharedService.errorLog(errorResponse);
+        } else {
+          this.category = state.specificCategory;
 
           this.title.setValue(this.category.title);
 
@@ -92,11 +93,9 @@ export class CategoryFormComponent implements OnInit {
             description: this.description,
             css_color: this.css_color,
           });
-        });
-      } catch (error: any) {
-        errorResponse = error.error;
-        this.sharedService.errorLog(errorResponse);
-      }
+        }
+      });
+      this.store.dispatch(getCategoryById({categoryId: this.categoryId}))
     }
   }
 
@@ -108,9 +107,9 @@ export class CategoryFormComponent implements OnInit {
       if (userId) {
         this.category.userId = userId;
 
-        this.store.select('categoryApp').subscribe(async callback => {
-          if(callback.error){
-            errorResponse = callback.error.error;
+        this.store.select('categoryApp').subscribe(async state => {
+          if(state.error){
+            errorResponse = state.error.error;
             this.sharedService.errorLog(errorResponse);
           } else {
             responseOK = true;
@@ -144,9 +143,9 @@ export class CategoryFormComponent implements OnInit {
     if (userId) {
       this.category.userId = userId;
 
-      this.store.select('categoryApp').subscribe( async callback => {
-          if(callback.error){
-            errorResponse = callback.error.error;
+      this.store.select('categoryApp').subscribe( async state => {
+          if(state.error){
+            errorResponse = state.error.error;
             this.sharedService.errorLog(errorResponse);
           } else{
             responseOK = true;

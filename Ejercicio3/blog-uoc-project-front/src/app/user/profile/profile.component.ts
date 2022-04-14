@@ -99,12 +99,12 @@ export class ProfileComponent implements OnInit {
     // load user data
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      this.store.select('userApp').subscribe( callback => {
-        if(callback.error){
-          errorResponse = callback.error.error;
+      this.store.select('userApp').subscribe( state => {
+        if(state.error){
+          errorResponse = state.error.error;
           this.sharedService.errorLog(errorResponse);
         } else {
-          const userData = callback.user;
+          const userData = state.user;
 
           this.name.setValue(userData.name);
           this.surname_1.setValue(userData.surname_1);
@@ -146,10 +146,10 @@ export class ProfileComponent implements OnInit {
     const userId = this.localStorageService.get('user_id');
 
     if (userId) {
-      this.store.select('userApp').subscribe(async callback => {
-        if(callback.error){
+      this.store.select('userApp').subscribe(async state => {
+        if(state.error){
           responseOK = false;
-          errorResponse = callback.error.error;
+          errorResponse = state.error.error;
 
           this.sharedService.errorLog(errorResponse);
         } else{
