@@ -30,7 +30,6 @@ export class CategoryFormComponent implements OnInit {
 
   private isUpdateMode: boolean;
   private categoryId: string | null;
-  private validRequest: boolean
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -44,7 +43,6 @@ export class CategoryFormComponent implements OnInit {
     this.categoryId = this.activatedRoute.snapshot.paramMap.get('id');
     this.category = new CategoryDTO('', '', '');
     this.isUpdateMode = false;
-    this.validRequest = false;
 
     this.title = new FormControl(this.category.title, [
       Validators.required,
@@ -66,6 +64,22 @@ export class CategoryFormComponent implements OnInit {
       description: this.description,
       css_color: this.css_color,
     });
+
+    this.store.select('categoryApp').subscribe((categories) => {
+      this.category = categories.specificCategory;
+  
+      this.title.setValue(this.category.title);
+  
+      this.description.setValue(this.category.description);
+  
+      this.css_color.setValue(this.category.css_color);
+  
+      this.categoryForm = this.formBuilder.group({
+        title: this.title,
+        description: this.description,
+        css_color: this.css_color,
+      });
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -74,101 +88,29 @@ export class CategoryFormComponent implements OnInit {
     // update
     if (this.categoryId) {
       this.isUpdateMode = true;
-
-      this.store.select('categoryApp').subscribe( state => {
-        if(state.error){
-          errorResponse = state.error.error;
-          this.sharedService.errorLog(errorResponse);
-        } else {
-          this.category = state.specificCategory;
-
-          this.title.setValue(this.category.title);
-
-          this.description.setValue(this.category.description);
-  
-          this.css_color.setValue(this.category.css_color);
-  
-          this.categoryForm = this.formBuilder.group({
-            title: this.title,
-            description: this.description,
-            css_color: this.css_color,
-          });
-        }
-      });
       this.store.dispatch(getCategoryById({categoryId: this.categoryId}))
+    } else {
+      this.categoryForm.reset();
     }
   }
 
-  private editCategory(): boolean {
-    let errorResponse: any;
-    let responseOK: boolean = false;
+  private editCategory(): void {
     if (this.categoryId) {
       const userId = this.localStorageService.get('user_id');
       if (userId) {
         this.category.userId = userId;
-
-        this.store.select('categoryApp').subscribe(async state => {
-          if(state.error){
-            errorResponse = state.error.error;
-            this.sharedService.errorLog(errorResponse);
-          } else {
-            responseOK = true;
-          }
-
-          await this.sharedService.managementToast(
-            'categoryFeedback',
-            responseOK,
-            errorResponse
-          );
-
-          if (responseOK) {
-            // Reset the form
-            //this.registerForm.reset();
-            // After reset form we set birthDate to today again (is an example)
-            //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-            this.router.navigateByUrl('categories');
-          }
-        });
-
         this.store.dispatch(updateCategory({ categoryId: this.categoryId, categoryUpd: this.category}));
       }
     }
-    return responseOK;
   }
 
-  private createCategory(): boolean {
-    let errorResponse: any;
-    let responseOK: boolean = false;
+  private createCategory(): void {
     const userId = this.localStorageService.get('user_id');
     if (userId) {
       this.category.userId = userId;
 
-      this.store.select('categoryApp').subscribe( async state => {
-          if(state.error){
-            errorResponse = state.error.error;
-            this.sharedService.errorLog(errorResponse);
-          } else{
-            responseOK = true;
-          }
-
-          await this.sharedService.managementToast(
-            'categoryFeedback',
-            responseOK,
-            errorResponse
-          );
-    
-          if (responseOK) {
-            // Reset the form
-            //this.registerForm.reset();
-            // After reset form we set birthDate to today again (is an example)
-            //this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-            this.router.navigateByUrl('categories');
-          }
-      })
-
       this.store.dispatch(createCategory( { category: this.category }));
     } 
-    return responseOK;
   }
 
   async saveCategory() {
@@ -182,9 +124,9 @@ export class CategoryFormComponent implements OnInit {
     this.category = this.categoryForm.value;
 
     if (this.isUpdateMode) {
-      this.validRequest = await this.editCategory();
+       this.editCategory();
     } else {
-      this.validRequest = await this.createCategory();
+      this.createCategory();
     }
   }
 }

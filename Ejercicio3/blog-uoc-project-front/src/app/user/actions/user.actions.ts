@@ -26,6 +26,11 @@ export const getUserByIdSuccess = createAction(
     props<{ user: UserDTO }>()
 );
 
+export const getUserByIdError = createAction(
+    '[USER] Get user by Id failed',
+    props<{ payload: any }>()
+);
+
 export const updateUser = createAction(
     '[USER] User update',
     props<{ userId: string, user: UserDTO }>()

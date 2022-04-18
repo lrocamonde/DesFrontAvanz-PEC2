@@ -12,7 +12,7 @@ export const getPostsSuccess = createAction(
 
 export const getPostsError = createAction(
     '[POST] Get posts failed',
-    props<{payload: any[]}>()
+    props<{payload: any}>()
 );
 
 export const createPost = createAction(
@@ -27,7 +27,7 @@ export const createPostSuccess = createAction(
 
 export const createPostError = createAction(
     '[POST] Create post failed',
-    props<{payload: any[]}>()
+    props<{payload: any}>()
 );
 
 export const updatePost = createAction(
@@ -42,7 +42,7 @@ export const updatePostSuccess = createAction(
 
 export const updatePostError = createAction(
     '[POST] Update post failed',
-    props<{payload: any[]}>()
+    props<{payload: any}>()
 );
 
 export const deletePost = createAction(

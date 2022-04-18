@@ -17,27 +17,24 @@ export class CategoriesListComponent {
   categories!: CategoryDTO[];
 
   constructor(
-    private categoryService: CategoryService,
     private router: Router,
     private localStorageService: LocalStorageService,
     private sharedService: SharedService,
     private store: Store<AppState>
   ) {
     this.loadCategories();
+
+    this.store.select('categoryApp').subscribe( state => {
+        this.categories = state.categories;
+        if(state.rowsAffected > 0){     
+          this.loadCategories();
+        }
+    });
   }
 
   private loadCategories(): void {
-    let errorResponse: any;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      this.store.select('categoryApp').subscribe( state => {
-        if(state.error){
-          errorResponse = state.error.error;
-          this.sharedService.errorLog(errorResponse);
-        } else {
-          this.categories = state.categories;
-        }
-      });
       this.store.dispatch(getCategoriesByUserId({ userId: userId}));
     }
   }
@@ -58,16 +55,6 @@ export class CategoriesListComponent {
       'Confirm delete category with id: ' + categoryId + ' .'
     );
     if (result) {
-      this.store.select('categoryApp').subscribe( state => {
-        if(state.error){
-          errorResponse = state.error.error;
-          this.sharedService.errorLog(errorResponse);
-        } else {
-          if(state.rowsAffected > 0){
-            this.loadCategories();
-          }
-        }
-      });
       this.store.dispatch(deleteCategory({categoryId: categoryId}));
     }
   }

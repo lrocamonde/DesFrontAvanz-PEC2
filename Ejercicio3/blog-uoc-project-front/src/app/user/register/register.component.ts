@@ -94,53 +94,27 @@ export class RegisterComponent implements OnInit {
       email: this.email,
       password: this.password,
     });
+
+    this.store.select('userApp').subscribe(async state => {
+      if (!state.error){
+        // Reset the form
+        this.registerForm.reset();
+        // After reset form we set birthDate to today again (is an example)
+        this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
+      }
+    });
   }
 
   ngOnInit(): void {}
 
   register(): void {
-    let responseOK: boolean = false;
     this.isValidForm = false;
-    let errorResponse: any;
 
     if (this.registerForm.invalid) {
       return;
     }
-
     this.isValidForm = true;
     this.registerUser = this.registerForm.value;
-
-    this.store.select('userApp').subscribe(async state => {
-      if (state.error){
-        responseOK = false;
-        errorResponse = state.error.error;
-  
-        const headerInfo: HeaderMenus = {
-          showAuthSection: false,
-          showNoAuthSection: true,
-        };
-        this.headerMenusService.headerManagement.next(headerInfo);
-  
-        this.sharedService.errorLog(errorResponse);
-      } else {
-        responseOK = true;
-      }
-
-      await this.sharedService.managementToast(
-        'registerFeedback',
-        responseOK,
-        errorResponse
-      );
-  
-      if (responseOK) {
-        // Reset the form
-        this.registerForm.reset();
-        // After reset form we set birthDate to today again (is an example)
-        this.birth_date.setValue(formatDate(new Date(), 'yyyy-MM-dd', 'en'));
-        this.router.navigateByUrl('home');
-      }
-    });
-
     this.store.dispatch(register({ user: this.registerUser }))
   }
 }

@@ -10,7 +10,6 @@ export interface PostState{
     loaded: boolean;
     rowsAffected: number;
     error: any;
-    updatePosts: boolean;
 }
 
 export const initialState: PostState = {
@@ -20,13 +19,18 @@ export const initialState: PostState = {
     loading: false,
     loaded: false,
     error: null,
-    rowsAffected: 0,
-    updatePosts: false
+    rowsAffected: 0
 }
 
 const _postReducer = createReducer (
     initialState,
-    on(getPosts, (state) => ({...state, loading:true, updatePosts: false})),
+    on(getPosts, (state) => ({
+        ...state, 
+        loading:true,
+        loaded: false,
+        error: null,
+        rowsAffected: 0
+    })),
     on(getPostsSuccess, (state, {posts}) => ({
         ...state,
         error: null,
@@ -40,113 +44,137 @@ const _postReducer = createReducer (
         loading: false,
         loaded: true
     })),
-    on(createPost, (state) => ({...state})),
+    on(createPost, (state) => ({
+        ...state,
+        loading: true, 
+        loaded: false,
+        error: null
+    })),
     on(createPostSuccess, (state, {post}) => ({
         ...state,
+        loading: false,
+        loaded: true,
         error: null,
-        posts:[...state.posts, post]
+        post: post
     })),
     on(createPostError, (state, {payload}) => ({
         ...state,
-        error: payload
+        error: payload,
+        loading: false,
+        loaded: true
     })),
-    on(updatePost, (state) => ({...state})),
+    on(updatePost, (state) => ({
+        ...state,
+        loading: true, 
+        loaded: false,
+        error: null
+    })),
     on(updatePostSuccess, (state, {postUpd}) => ({
         ...state,
+        loading: false, 
+        loaded: true,
         error: null,
-        categories: [...state.posts.map((post) => {
-            if(post.postId === postUpd.postId){
-                return postUpd;
-            } else{
-                return post;
-            }
-        })]
+        post: postUpd
     })),
     on(updatePostError, (state, {payload}) => ({
         ...state,
+        loading: false, 
+        loaded: true,
         error: payload
     })),
     on(deletePost, (state, {postId}) => ({
         ...state,
-        categories: [...state.posts.filter(post => post.postId !== postId)]
+        loading: true, 
+        loaded: false,
+        error: null
     })),    
     on(deletePostSuccess, (state, {deleteResponse}) => ({
         ...state,
         error: null,
+        loading: false, 
+        loaded: true,
         rowsAffected: deleteResponse          
     })),
     on(deletePostError, (state, {payload})=> ({
         ...state,
+        loading: false, 
+        loaded: true,
         error: payload,
     })),
-    on(getPostsByUserId, (state) => ({...state, loading: true, rowsAffected: 0})),
+    on(getPostsByUserId, (state) => ({
+        ...state, 
+        loading: true,
+        loaded: false,
+        error: null, 
+        rowsAffected: 0})),
     on(getPostsByUserIdSuccess, (state, {posts}) => ({
         ...state,
         loading: false,
         loaded: true,
         error: null,
-        userPosts: [...posts],
-        rowsAffected: 0
+        userPosts: [...posts]
     })),
     on(getPostsByUserIdError, (state, {payload})=> ({
         ...state,
         loading: false,
         loaded: true,
-        error: payload,
+        error: payload
     })),
-    on(getPostsById, (state) => ({...state})),
+    on(getPostsById, (state) => ({
+        ...state,
+        loading: true,
+        loaded: false,
+        error: null, 
+    })),
     on(getPostsByIdSuccess, (state, {post}) => ({
         ...state,
-        post: post
+        post: post,
+        loading: false,
+        loaded: true,
     })),
     on(getPostsByIdError, (state, {payload})=> ({
         ...state,
-        error: payload,
+        loading: false,
+        loaded: true,
+        error: payload
     })),
     on(likePost, (state, {postId}) => ({
         ...state,
-        updatePosts:true,
-        posts:[...state.posts.map((post) =>{
-            if(post.postId === postId){
-                const num_likes = post.num_likes +1;
-                return {
-                    ...post,
-                    num_likes: num_likes
-                };
-            } else {
-                return post;
-            }
-        })]
+        loaded: false,
+        loading: true,
+        error: null
     })),
     on(likePostSuccess, (state, {updateResponse}) => ({
         ...state, 
+        loaded: true,
+        loading: false,
+        rowsAffected: updateResponse,
         error:null
     })),
     on(likePostError, (state, {payload})=> ({
         ...state,
+        loaded: true,
+        loading: false,
         error: payload,
     })),
     on(dislikePost, (state, {postId}) => ({
         ...state,
-        updatePosts:true,
-        posts:[...state.posts.map((post) =>{
-            if(post.postId === postId){
-                const num_dislikes = post.num_dislikes +1;
-                return {
-                    ...post,
-                    num_dislikes: num_dislikes
-                };
-            } else {
-                return post;
-            }
-        })]
+        loaded: false,
+        loading: true,
+        error: null
+
     })),
     on(dislikePostSuccess, (state, {updateResponse}) => ({
         ...state, 
+        loaded: true,
+        loading: false,
+        rowsAffected: updateResponse,
         error:null
     })),
     on(dislikePostError, (state, {payload})=> ({
         ...state,
+        loaded: true,
+        loading: false,
         error: payload,
     }))
 );

@@ -91,6 +91,31 @@ export class ProfileComponent implements OnInit {
       email: this.email,
       password: this.password,
     });
+
+    this.store.select('userApp').subscribe( state => {
+
+      const userData = state.user;
+
+      this.name.setValue(userData.name);
+      this.surname_1.setValue(userData.surname_1);
+      this.surname_2.setValue(userData.surname_2);
+      this.alias.setValue(userData.alias);
+      this.birth_date.setValue(
+        formatDate(userData.birth_date, 'yyyy-MM-dd', 'en')
+      );
+      this.email.setValue(userData.email);
+
+      this.profileForm = this.formBuilder.group({
+        name: this.name,
+        surname_1: this.surname_1,
+        surname_2: this.surname_2,
+        alias: this.alias,
+        birth_date: this.birth_date,
+        email: this.email,
+        password: this.password,
+      });
+      
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -99,42 +124,12 @@ export class ProfileComponent implements OnInit {
     // load user data
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      this.store.select('userApp').subscribe( state => {
-        if(state.error){
-          errorResponse = state.error.error;
-          this.sharedService.errorLog(errorResponse);
-        } else {
-          const userData = state.user;
-
-          this.name.setValue(userData.name);
-          this.surname_1.setValue(userData.surname_1);
-          this.surname_2.setValue(userData.surname_2);
-          this.alias.setValue(userData.alias);
-          this.birth_date.setValue(
-            formatDate(userData.birth_date, 'yyyy-MM-dd', 'en')
-          );
-          this.email.setValue(userData.email);
-  
-          this.profileForm = this.formBuilder.group({
-            name: this.name,
-            surname_1: this.surname_1,
-            surname_2: this.surname_2,
-            alias: this.alias,
-            birth_date: this.birth_date,
-            email: this.email,
-            password: this.password,
-          });
-        }
-      });
-
       this.store.dispatch(getUserById({userId}));
     }
   }
 
   updateUser(): void {
-    let responseOK: boolean = false;
     this.isValidForm = false;
-    let errorResponse: any;
 
     if (this.profileForm.invalid) {
       return;
@@ -146,23 +141,6 @@ export class ProfileComponent implements OnInit {
     const userId = this.localStorageService.get('user_id');
 
     if (userId) {
-      this.store.select('userApp').subscribe(async state => {
-        if(state.error){
-          responseOK = false;
-          errorResponse = state.error.error;
-
-          this.sharedService.errorLog(errorResponse);
-        } else{
-          responseOK = true;
-        }
-
-        await this.sharedService.managementToast(
-          'profileFeedback',
-          responseOK,
-          errorResponse
-        );
-      });
-
       this.store.dispatch(updateUser({userId: userId, user: this.profileUser}));
     }
   }

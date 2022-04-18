@@ -19,15 +19,20 @@ export class HomeComponent {
   posts!: PostDTO[];
   showButtons: boolean;
   constructor(
-    private postService: PostService,
     private localStorageService: LocalStorageService,
     private sharedService: SharedService,
-    private router: Router,
     private headerMenusService: HeaderMenusService,
     private store: Store<AppState>
   ) {
     this.showButtons = false;
     this.loadPosts();
+
+    this.store.select('postApp').subscribe( state => {
+      this.posts = state.posts;
+      if(state.rowsAffected > 0){
+        this.loadPosts();
+      }
+    })
   }
 
   ngOnInit(): void {
@@ -40,51 +45,18 @@ export class HomeComponent {
     );
   }
   private async loadPosts(): Promise<void> {
-    let errorResponse: any;
     const userId = this.localStorageService.get('user_id');
     if (userId) {
       this.showButtons = true;
     }
-    this.store.select('postApp').subscribe( state => {
-      if (state.error) {
-        errorResponse = state.error.error;
-        this.sharedService.errorLog(errorResponse)
-      } else {
-        this.posts = state.posts;
-      }
-    })
     this.store.dispatch(getPosts());
   }
 
   like(postId: string): void {
-    let errorResponse: any;
-    this.store.select('postApp').subscribe( state => {
-      if (state.error) {
-        errorResponse = state.error.error;
-        this.sharedService.errorLog(errorResponse);
-      } else {
-        console.log('Load posts');
-        if(state.updatePosts){
-          this.loadPosts();
-        }
-      }
-    });
     this.store.dispatch(likePost({postId: postId}));
   }
 
   dislike(postId: string): void {
-    let errorResponse: any;
-    this.store.select('postApp').subscribe( state => {
-      if (state.error) {
-        errorResponse = state.error.error;
-        this.sharedService.errorLog(errorResponse);
-      } else {
-        console.log('Load posts');
-        if(state.updatePosts){
-          this.loadPosts();
-        }
-      }
-    });
     this.store.dispatch(dislikePost({postId: postId}));
   }
 }

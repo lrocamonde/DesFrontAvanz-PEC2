@@ -28,10 +28,6 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private sharedService: SharedService,
-    private headerMenusService: HeaderMenusService,
-    private localStorageService: LocalStorageService,
-    private router: Router,
     private store: Store<AppState>
   ) {
     this.loginUser = new AuthDTO('', '', '', '');
@@ -51,59 +47,16 @@ export class LoginComponent implements OnInit {
       email: this.email,
       password: this.password,
     });
+
+    this.store.select('authApp').subscribe(() => {});
   }
 
   ngOnInit(): void {}
 
   login(): void {
-    let responseOK: boolean = false;
-    let errorResponse: any;
 
     this.loginUser.email = this.email.value;
     this.loginUser.password = this.password.value;
-
-
-    this.store.select('authApp').subscribe(async (state) =>{
-
-      if(state.error){
-
-        console.log("Fallo");
-        responseOK = false;
-        errorResponse = state.error.error;
-        const headerInfo: HeaderMenus = {
-          showAuthSection: false,
-          showNoAuthSection: true,
-        };
-        this.headerMenusService.headerManagement.next(headerInfo);
-  
-        this.sharedService.errorLog(state.error.error);
-
-      } else{
-        
-        console.log("Correcto");
-        responseOK = true; 
-        this.localStorageService.set('user_id', state.auth.user_id);
-        this.localStorageService.set('access_token', state.auth.access_token);
-
-      }
-      
-      await this.sharedService.managementToast(
-        'loginFeedback',
-        responseOK,
-        errorResponse
-      );
-  
-      if (responseOK) {
-        const headerInfo: HeaderMenus = {
-          showAuthSection: true,
-          showNoAuthSection: false,
-        };
-        // update options menu
-        this.headerMenusService.headerManagement.next(headerInfo);
-        this.router.navigateByUrl('home');
-      }
-
-    })
 
     this.store.dispatch(login({ auth: new AuthDTO('', '',this.loginUser.email, this.loginUser.password)}));
 

@@ -23,20 +23,18 @@ export class PostsListComponent {
     private store: Store<AppState>
   ) {
     this.loadPosts();
+
+    this.store.select('postApp').subscribe( state => {
+      this.posts = state.userPosts;
+      if(state.rowsAffected > 0) {
+        this.loadPosts();
+      }
+    });
   }
 
-  private async loadPosts(): Promise<void> {
-    let errorResponse: any;
+  private loadPosts(): void {
     const userId = this.localStorageService.get('user_id');
     if (userId) {
-      this.store.select('postApp').subscribe( state => {
-        if (state.error) {
-          errorResponse = state.error.error;
-          this.sharedService.errorLog(errorResponse);
-        } else {
-          this.posts = state.userPosts;
-        }
-      });
       this.store.dispatch(getPostsByUserId({userId: userId}));
     }
   }
@@ -50,21 +48,10 @@ export class PostsListComponent {
   }
 
   async deletePost(postId: string): Promise<void> {
-    let errorResponse: any;
 
     // show confirmation popup
     let result = confirm('Confirm delete post with id: ' + postId + ' .');
     if (result) {
-      this.store.select('postApp').subscribe( state => {
-        if (state.error) {
-          errorResponse = state.error.error;
-          this.sharedService.errorLog(errorResponse);
-        } else {
-          if (state.rowsAffected > 0) {
-            this.loadPosts();
-          }
-        }
-      });
       this.store.dispatch(deletePost({postId: postId}));
     }
   }

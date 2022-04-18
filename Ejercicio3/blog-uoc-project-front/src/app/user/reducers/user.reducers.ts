@@ -1,5 +1,5 @@
 import { Action, createReducer, on } from "@ngrx/store";
-import { register, registerError, registerSuccess, updateUser, updateUserError, updateUserSuccess, getUserById, getUserByIdSuccess } from "../actions";
+import { register, registerError, registerSuccess, updateUser, updateUserError, updateUserSuccess, getUserById, getUserByIdSuccess, getUserByIdError } from "../actions";
 import { UserDTO } from "../models/user.dto";
 
 export interface UserState {
@@ -18,7 +18,12 @@ export const initialState: UserState = {
 
 const _userReducer = createReducer (
     initialState,
-    on(register, (state) => ({...state, loading: true})),
+    on(register, (state) => ({
+        ...state, 
+        loading: true,
+        loaded: false,
+        error: null
+    })),
     on(registerSuccess, (state, { user }) => ({
         ...state,
         loading: false,
@@ -30,10 +35,14 @@ const _userReducer = createReducer (
         ...state,
         loading: false,
         loaded: true,
-        user: initialState.user,
         error: payload
     })),
-    on(updateUser, (state) => ({...state, loading: true})),
+    on(updateUser, (state) => ({
+        ...state, 
+        loading: true,
+        loaded: false,
+        error: null
+    })),
     on(updateUserSuccess, (state, { user }) => ({
         ...state,
         loading: false,
@@ -47,12 +56,23 @@ const _userReducer = createReducer (
         loaded: true,
         error: payload
     })),
-    on(getUserById, (state, {userId}) => ({...state, loading: true})),
+    on(getUserById, (state) => ({
+        ...state, 
+        loading: true,
+        loaded: false,
+        error: null
+    })),
     on(getUserByIdSuccess, (state, {user}) => ({
         ...state,
         loading: false,
         loaded: true,
         user: user
+    })),
+    on(getUserByIdError, (state, {payload}) => ({
+        ...state,
+        loading: false,
+        loaded: true,
+        error: payload
     }))
 );
 
